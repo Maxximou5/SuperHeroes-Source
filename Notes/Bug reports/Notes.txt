@@ -1,0 +1,36 @@
+Client "TrueType" connected (192.168.1.76:27006).
+Server waking up from hibernation
+L 08/27/2015 - 21:46:05: [SH_Core.smx] Error connecting to database: Could not find database conf "superheroes"
+L 08/27/2015 - 21:46:05: [SH_Heroes.smx] Registering new hero: HeroID: 14, Name: Hero 1, Description: This is hero 1., Required Level: 0, Model: model/hero1/hero1.mdl, Flags: a, LoadType: 1
+L 08/27/2015 - 21:46:05: [SH_Heroes.smx] Attempting to assign Hero 'Hero 1' the ability 'RopeSwing' but the ability doesn't exist.
+L 08/27/2015 - 21:46:05: [SH_Heroes.smx] Registering new hero: HeroID: 15, Name: Hero 2, Description: This is hero 2., Required Level: 0, Model: model/hero2/hero2.mdl, Flags: , LoadType: 1
+L 08/27/2015 - 21:46:05: [SH_Heroes.smx] Registering new hero: HeroID: 16, Name: Hero 3, Description: This is hero 3., Required Level: 0, Model: model/hero3/hero3.mdl, Flags: , LoadType: 1
+L 08/27/2015 - 21:46:05: [SH_Progression.smx] Error parsing progression keyvalues, please verify config integrity.
+L 08/27/2015 - 21:46:05: [SM] Native "SH_TQuery" reported: Database is not connected currently.
+L 08/27/2015 - 21:46:05: [SM] Displaying call stack trace for plugin "SH_Progression.smx":
+L 08/27/2015 - 21:46:05: [SM]   [0]  Line 326, SH_Progression.sp::OnClientAuthorized()
+PutClientInServer: no info_player_start on level
+L 08/27/2015 - 21:46:30: [basecommands.smx] "TrueType<2><STEAM_1:0:32157042><>" console command (cmdline "mp_warmuptime 2")
+L 08/27/2015 - 21:46:39: [basecommands.smx] "TrueType<2><STEAM_1:0:32157042><>" console command (cmdline "mp_freezetime 0")
+TrueType: !heroes
+amount = 1
+amount = 1
+0
+amount = 0
+amount is less than 1.
+L 08/27/2015 - 21:47:31: [SM] Native "SH_TQuery" reported: Database is not connected currently.
+L 08/27/2015 - 21:47:31: [SM] Displaying call stack trace for plugin "SH_Progression.smx":
+L 08/27/2015 - 21:47:31: [SM]   [0]  Line 405, SH_Progression.sp::OnClientDisconnect()
+Dropped TrueType from server: Disconnect
+not valid
+not valid
+not valid
+not valid
+not valid
+not valid
+not valid
+not valid
+not valid
+Game will not start until both teams have players.
+-> Reservation cookie 0:  reason reserved(yes), clients(no), reservationexpires(0.00)
+Server is hibernating

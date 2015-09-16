@@ -21,7 +21,12 @@ public void OnPluginStart()
 
 public void SH_OnReady()
 {
-	Hero = SH_RegisterHero("Torch", "The ability to shoot fire.", 1, "", "");
+	SH_RegisterHero(OnHeroCreated, "Torch", "The ability to shoot fire.", 1, "", "");
+}
+
+public void OnHeroCreated(int HeroID, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel, const char[] sFlags)
+{
+	Hero = HeroID;
 	
 	Ability = SH_RegisterAbility("ShootFireballs", "Shoot Fireballs", "Allows heroes to shoot fireballs.", 5, OnAbilityUse);
 	SH_AssignHeroAbility(Hero, Ability);

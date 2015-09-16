@@ -23,7 +23,12 @@ public void OnPluginStart()
 
 public void SH_OnReady()
 {
-	Hero = SH_RegisterHero("Cyclops", "Allows you to shoot lasers.", 1, "", "");
+	SH_RegisterHero(OnHeroCreated, "Cyclops", "Allows you to shoot lasers.", 1, "", "");
+}
+
+public void OnHeroCreated(int HeroID, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel, const char[] sFlags)
+{
+	Hero = HeroID;
 	
 	Ability = SH_RegisterAbility("ShootLasers", "Shoot Lasers", "Allows heroes to shoot lasers.", 20, OnAbilityUse, INVALID_FUNCTION);
 	SH_AssignHeroAbility(Hero, Ability);

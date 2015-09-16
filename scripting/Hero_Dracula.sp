@@ -20,7 +20,7 @@ public void OnPluginStart()
 
 public void SH_OnReady()
 {
-	Hero = SH_RegisterHero("Dracula", "Gain a percentage of health from damaged enemies.", 1, "", "");
+	Hero = SH_RegisterHero(INVALID_FUNCTION, "Dracula", "Gain a percentage of health from damaged enemies.", 1, "", "");
 }
 
 public void OnMapStart()

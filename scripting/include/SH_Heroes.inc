@@ -9,6 +9,10 @@
 #define MAX_HERO_DESCRIPTION_LENGTH 128
 
 //Callback Typesets
+typeset SH_OnHeroRegistered
+{
+	function void(int HeroID, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel, const char[] sFlags);
+}
 
 //////////////////
 //Natives
@@ -16,6 +20,7 @@
 /**
  * Register new heroes with this function then handle the new hero with other functions.
  *
+ * @param callback			Function called when the hero is created.
  * @param sName				Name of the Hero.
  * @param sDescription		Description for the Hero.
  * @param iRequiredLevel	Required level for this hero to be played.
@@ -24,7 +29,7 @@
  *
  * @return	index/id of the hero.
  **/
-native int SH_RegisterHero(const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel, const char[] sFlags);
+native int SH_RegisterHero(SH_OnHeroRegistered callback, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel, const char[] sFlags);
 
 /**
  * Retrieves the index/ID of the hero the client is playing. Since the array is filled with values, you will need the amount in order to pull the right amount from the array to use.

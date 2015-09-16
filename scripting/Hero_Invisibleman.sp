@@ -19,18 +19,23 @@ public void OnPluginStart()
 
 public void SH_OnReady()
 {
-	Hero = SH_RegisterHero("Invisible Man", "Stand still for 5 seconds to become invisible until you become active again.", 1, "", "");
+	Hero = SH_RegisterHero(INVALID_FUNCTION, "Invisible Man", "Stand still for 5 seconds to become invisible until you become active again.", 1, "", "");
 }
 
-public void OnAbilityUse(int client, int HeroID, const char[] sName, const char[] sDisplayName, const char[] sDescription)
+public void SH_OnAssignedHero(int client, int HeroID, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel)
 {
-	if (Hero != HeroID)
+	if (HeroID == Hero)
+	{
+		bInvisibleMan[client] = true;
+	}
+}
+
+public void SH_OnUnassignedHero(int client, int HeroID)
+{
+	if (HeroID == Hero)
 	{
 		bInvisibleMan[client] = false;
-		return;
 	}
-	
-	bInvisibleMan[client] = true;
 }
 
 public void SH_OnHeroSpawn(int client, int HeroID)

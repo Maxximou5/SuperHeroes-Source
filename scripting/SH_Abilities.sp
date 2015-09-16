@@ -238,7 +238,7 @@ int RegisterAbility(const char[] sName, const char[] sDisplayName, const char[] 
 	int index = PushArrayCell(hAbilityPacks, hPack);
 	SetTrieValue(hAbilityTrie, sName, index);
 	
-	SH_LogInfo("New Ability Registered: Index:%i Name:%s Display Name:%s Description:%s Cooldown:%i", index, sName, sDisplayName, sDescription, iCooldown);
+	SH_LogInfo("Ability Registered - Index:[%i] Name:[%s] DisplayName:[%s] Description:[%s] Cooldown:[%i]", index, sName, sDisplayName, sDescription, iCooldown);
 	
 	return index;
 }
@@ -396,19 +396,28 @@ void AddAbilityCommand(int AbilityID, const char[] sName)
 	
 	SetTrieValue(hAbilityCommandTrie, sName, AbilityID);
 	
-	SH_LogInfo("Command %s registered to the AbilityID %i. [%s-%s]", sName, AbilityID, sCommandPlus, sCommandMinus);
+	SH_LogInfo("Command %s registered to the AbilityID %i. [%s : %s]", sName, AbilityID, sCommandPlus, sCommandMinus);
 }
 
 //Universal command registered to use abilities with binds.
 public Action OnAbilityNativeUse(int client, int args)
 {
+	if (!IsPlayerAlive(client))
+	{
+		return Plugin_Handled;
+	}
+	
 	char sCommand[MAX_ABILITY_COMMAND_LENGTH];
 	GetCmdArg(0, sCommand, sizeof(sCommand));
 	
 	bool bPress = view_as<bool>StrContains(sCommand, "+") != -1;
 	
+	char sPreview[MAX_ABILITY_NAME_LENGTH];
+	strcopy(sPreview, sizeof(sPreview), sCommand);
+	ReplaceString(sPreview, sizeof(sPreview), bPress ? "+" : "-", "");
+	
 	int AbilityID;
-	GetTrieValue(hAbilityCommandTrie, sCommand, AbilityID);
+	GetTrieValue(hAbilityCommandTrie, sPreview, AbilityID);
 	
 	UseAbility(client, AbilityID, bPress);
 	
@@ -419,6 +428,14 @@ public Action OnAbilityNativeUse(int client, int args)
 void UseAbility(int client, int AbilityID, bool bPress)
 {
 	int HeroID = AbilityIDToHeroID(AbilityID);
+	
+	char sHeroName[MAX_HERO_NAME_LENGTH];
+	SH_GetHeroName(HeroID, sHeroName, sizeof(sHeroName));
+	
+	char sAbilityName[MAX_ABILITY_NAME_LENGTH];
+	SH_GetAbilityName(AbilityID, sAbilityName, sizeof(sAbilityName));
+	
+	PrintToServer("%N - %s[%i] - %s[%i] - %s", client, sAbilityName, AbilityID, sHeroName, HeroID, bPress ? "True" : "False");
 	
 	if (!SH_IsClientHero(client, HeroID))
 	{
@@ -449,6 +466,12 @@ void UseAbility(int client, int AbilityID, bool bPress)
 	int iCooldown = ReadPackCell(hPack);
 	
 	CloseHandle(hPack);
+	
+	if (!bPress && callback_release == INVALID_FUNCTION)
+	{
+		PrintToServer("No release function present for the Ability %s[%i].", sDisplayName, AbilityID);
+		return;
+	}
 	
 	if (iCooldown < iCooldowns[client])
 	{
@@ -515,16 +538,23 @@ public int Native_RegisterAbility(Handle hPlugin, int iParams)
 //Assigns a specific ability to a hero.
 public int Native_AssignHeroAbility(Handle hPlugin, int iParams)
 {
-	int ID = GetNativeCell(1);
+	int HeroID = GetNativeCell(1);
+	int AbilityID = GetNativeCell(2);
 	
-	if (!SH_IsHeroValid(ID))
+	char sAbilityName[MAX_ABILITY_NAME_LENGTH];
+	SH_GetAbilityName(AbilityID, sAbilityName, sizeof(sAbilityName));
+	
+	if (!SH_IsValidAbility(sAbilityName))
 	{
 		return false;
 	}
 	
-	iHeroAbility[ID] = GetNativeCell(2);
+	iHeroAbility[HeroID] = AbilityID;
 	
-	SH_LogInfo("Hero %i has been assigned the ability %i.", ID, iHeroAbility[ID]);
+	char sHeroName[MAX_HERO_NAME_LENGTH];
+	SH_GetHeroName(HeroID, sHeroName, sizeof(sHeroName));
+	
+	SH_LogInfo("Hero %s [%i] has been assigned the ability %s [%i].", sHeroName, HeroID, sAbilityName, iHeroAbility[HeroID]);
 	
 	return true;
 }

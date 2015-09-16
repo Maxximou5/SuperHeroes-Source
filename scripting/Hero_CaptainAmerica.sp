@@ -19,7 +19,7 @@ public void OnPluginStart()
 
 public void SH_OnReady()
 {
-	Hero = SH_RegisterHero("Captain America", "Block damage from enemies at random.", 1, "", "");
+	Hero = SH_RegisterHero(INVALID_FUNCTION, "Captain America", "Block damage from enemies at random.", 1, "", "");
 }
 
 public Action SH_OnTakeDamage(int client, int attacker, int inflictor, float damage, int damagetype, int weapon, float damageForce[3], float damagePosition[3])

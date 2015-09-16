@@ -1,0 +1,5 @@
+L 08/29/2015 - 15:20:01: [SH_Core.smx] Error connecting to database: Could not find database conf "superheroes"
+L 08/29/2015 - 15:20:01: [SH_Progression.smx] Error parsing progression keyvalues, please verify config integrity.
+L 08/29/2015 - 15:20:02: [SM] Native "SH_TQuery" reported: Database is not connected currently.
+L 08/29/2015 - 15:20:02: [SM] Displaying call stack trace for plugin "SH_Progression.smx":
+L 08/29/2015 - 15:20:02: [SM]   [0]  Line 326, SH_Progression.sp::OnClientAuthorized()

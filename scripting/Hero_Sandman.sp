@@ -23,7 +23,12 @@ public void OnPluginStart()
 
 public void SH_OnReady()
 {
-	Hero = SH_RegisterHero("Sandman", "Bury your enemies for 5 seconds.", 1, "", "");
+	SH_RegisterHero(OnHeroCreated, "Sandman", "Bury your enemies for 5 seconds.", 1, "", "");
+}
+
+public void OnHeroCreated(int HeroID, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel, const char[] sFlags)
+{
+	Hero = HeroID;
 	
 	Ability = SH_RegisterAbility("BuryEnemies", "Bury Enemies", "Bury enemies in the ground.", 5, OnAbilityUse);
 	SH_AssignHeroAbility(Hero, Ability);

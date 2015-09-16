@@ -22,7 +22,12 @@ public void OnPluginStart()
 
 public void SH_OnReady()
 {
-	Hero = SH_RegisterHero("Naruto", "Access to Rasengan.", 1, "", "");
+	SH_RegisterHero(OnHeroCreated, "Naruto", "Access to Rasengan.", 1, "", "");
+}
+
+public void OnHeroCreated(int HeroID, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel, const char[] sFlags)
+{
+	Hero = HeroID;
 	
 	Ability = SH_RegisterAbility("Rasengan", "Rasengan", "Make copies of yourself.", 5, OnAbilityUse);
 	SH_AssignHeroAbility(Hero, Ability);

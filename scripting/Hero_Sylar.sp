@@ -17,7 +17,7 @@ public void OnPluginStart()
 
 public void SH_OnReady()
 {
-	Hero = SH_RegisterHero("Sylar", "When you kill someone, gain a percentage of their health.", 1, "", "");
+	Hero = SH_RegisterHero(INVALID_FUNCTION, "Sylar", "When you kill someone, gain a percentage of their health.", 1, "", "");
 }
 
 public void OnPlayerDeath(Handle hEvent, char[] sName, bool bBroadcast)

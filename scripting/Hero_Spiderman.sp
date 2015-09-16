@@ -35,7 +35,12 @@ public void OnPluginStart()
 
 public void SH_OnReady()
 {
-	Hero = SH_RegisterHero("Spiderman", "Allows you to swing from walls.", 1, "", "");
+	SH_RegisterHero(OnHeroCreated, "Spiderman", "Allows you to swing from walls.", 1, "", "");
+}
+
+public void OnHeroCreated(int HeroID, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel, const char[] sFlags)
+{
+	Hero = HeroID;
 	
 	Ability = SH_RegisterAbility("RopeSwing", "Rope Swing", "Allows heroes to swing from walls.", 0, OnAbilityPress, OnAbilityRelease);
 	SH_AssignHeroAbility(Hero, Ability);

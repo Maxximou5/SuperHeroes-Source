@@ -16,7 +16,7 @@ public void OnPluginStart()
 
 public void SH_OnReady()
 {
-	Hero = SH_RegisterHero("Flash", "Allows you to run faster.", 1, "", "");
+	Hero = SH_RegisterHero(INVALID_FUNCTION, "Flash", "Allows you to run faster.", 1, "", "");
 }
 
 public void SH_OnAssignedHero(int client, int HeroID, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel)

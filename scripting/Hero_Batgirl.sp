@@ -26,7 +26,12 @@ public void OnPluginStart()
 
 public void SH_OnReady()
 {
-	Hero = SH_RegisterHero("Batgirl", "Allows you to stream-line walls.", 1, "", "");
+	SH_RegisterHero(OnHeroCreated, "Batgirl", "Allows you to stream-line walls.", 1, "", "");
+}
+
+public void OnHeroCreated(int HeroID, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel, const char[] sFlags)
+{
+	Hero = HeroID;
 	
 	Ability = SH_RegisterAbility("Streamline", "Stream-Line", "Allows heroes to stream-line from walls.", 0, OnAbilityPress, OnAbilityRelease);
 	SH_AssignHeroAbility(Hero, Ability);

@@ -20,7 +20,12 @@ public void OnPluginStart()
 
 public void SH_OnReady()
 {
-	Hero = SH_RegisterHero("Mystique", "Allows you to shapeshift into different forms.", 1, "", "");
+	SH_RegisterHero(OnHeroCreated, "Mystique", "Allows you to shapeshift into different forms.", 1, "", "");
+}
+
+public void OnHeroCreated(int HeroID, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel, const char[] sFlags)
+{
+	Hero = HeroID;
 	
 	Ability = SH_RegisterAbility("Shapeshifting", "Shapeshifting", "Allows you to shapeshift into different forms.", 15, OnAbilityUse);
 	SH_AssignHeroAbility(Hero, Ability);

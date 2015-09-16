@@ -509,11 +509,11 @@ public Action SetClientHero(int client, int args)
 }
 
 //Function to create new heroes.
-int RegisterNewHero(int Load_Type, Handle hPlugin, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel, const char[] sFlags)
+int RegisterNewHero(SH_OnHeroRegistered callback = INVALID_FUNCTION, int Load_Type, Handle hPlugin, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel, const char[] sFlags)
 {
 	if (IsHeroRegistered(sName))
 	{
-		return -1;
+		return SH_GetHeroID(sName);
 	}
 	
 	strcopy(iHeroes[iHeroesAmount][Hero_Name], MAX_HERO_NAME_LENGTH, sName);
@@ -524,38 +524,49 @@ int RegisterNewHero(int Load_Type, Handle hPlugin, const char[] sName, const cha
 	iHeroes[iHeroesAmount][Hero_LoadType] = Load_Type;
 	iHeroes[iHeroesAmount][Hero_Plugin] = hPlugin;
 	
-	int ID = iHeroesAmount;
+	int HeroID = iHeroesAmount;
+	iHeroesAmount++;
 	
-	char sLoadTypeString[32];
-	switch (iHeroes[iHeroesAmount][Hero_LoadType])
+	char sLoadType[32];
+	switch (iHeroes[HeroID][Hero_LoadType])
 	{
 		case SH_LOAD_CONFIG:
 		{
 			//Hero is loading from a configuration file.
-			strcopy(sLoadTypeString, sizeof(sLoadTypeString), "Config");
+			strcopy(sLoadType, sizeof(sLoadType), "Config");
 		}
 		case SH_LOAD_PLUGIN:
 		{
 			//Hero is loading from a plugin native.
-			strcopy(sLoadTypeString, sizeof(sLoadTypeString), "Plugin");
+			strcopy(sLoadType, sizeof(sLoadType), "Plugin");
 		}
 		case SH_LOAD_MYSQL:
 		{
 			//Hero is loading from a an SQL table.
-			strcopy(sLoadTypeString, sizeof(sLoadTypeString), "MySQL");
+			strcopy(sLoadType, sizeof(sLoadType), "MySQL");
 		}
 		case SH_LOAD_ALL:
 		{
 			//Used when reloading as an indication of all.
-			strcopy(sLoadTypeString, sizeof(sLoadTypeString), "All");
+			strcopy(sLoadType, sizeof(sLoadType), "All");
 		}
 	}
 	
-	SH_LogInfo("New Hero Registerd: Index:%i Name:%s Description:%s Required Level:%i Model Path:%s Flags:%s LoadType:%s", ID, iHeroes[iHeroesAmount][Hero_Name], iHeroes[iHeroesAmount][Hero_Description], iHeroes[iHeroesAmount][Hero_RequiredLevel], iHeroes[iHeroesAmount][Hero_Model], iHeroes[iHeroesAmount][Hero_Flags], sLoadTypeString);
+	SH_LogInfo("Hero Registered - Index:[%i] Name:[%s] Description:[%s] Required Level:[%i] Model Path:[%s] Flags:[%s] LoadType:[%s]", HeroID, iHeroes[HeroID][Hero_Name], iHeroes[HeroID][Hero_Description], iHeroes[HeroID][Hero_RequiredLevel], iHeroes[HeroID][Hero_Model], iHeroes[HeroID][Hero_Flags], sLoadType);
 	
-	iHeroesAmount++;
+	if (callback != INVALID_FUNCTION)
+	{
+		Call_StartFunction(hPlugin, callback);
+		Call_PushCell(HeroID);
+		Call_PushString(iHeroes[HeroID][Hero_Name]);
+		Call_PushString(iHeroes[HeroID][Hero_Description]);
+		Call_PushCell(iHeroes[HeroID][Hero_RequiredLevel]);
+		Call_PushString(iHeroes[HeroID][Hero_Model]);
+		Call_PushString(iHeroes[HeroID][Hero_Flags]);
+		Call_Finish();
+	}
 	
-	return ID;
+	return HeroID;
 }
 
 //Checks if a specific hero is already registered.
@@ -741,7 +752,7 @@ bool MakeClientHero(int client, int slot, const char[] sHeroName, bool bCheckLev
 		PrintToChat(client, "Hero '%s' has been added to your roster.", iHeroes[HeroID][Hero_Name]);
 	}
 	
-	if (cv_bLoadModels)
+	if (cv_bLoadModels && strlen(iHeroes[HeroID][Hero_Model]) != 0 && FileExists(iHeroes[HeroID][Hero_Model]))
 	{
 		SetEntityModel(client, iHeroes[HeroID][Hero_Model]);
 	}
@@ -880,7 +891,7 @@ bool LoadSuperHeroConfig(const char[] sFile)
 	char sFlags[32];
 	KvGetString(hKV, "Flags", sFlags, sizeof(sFlags));
 	
-	int HeroID = RegisterNewHero(SH_LOAD_CONFIG, INVALID_HANDLE, sName, sDescription, iRequiredLevel, sModel, sFlags);
+	int HeroID = RegisterNewHero(INVALID_FUNCTION, SH_LOAD_CONFIG, INVALID_HANDLE, sName, sDescription, iRequiredLevel, sModel, sFlags);
 	
 	if (KvJumpToKey(hKV, "Abilities"))
 	{
@@ -893,9 +904,9 @@ bool LoadSuperHeroConfig(const char[] sFile)
 			if (SH_IsValidAbility(sKey))
 			{
 				int AbilityID = SH_GetAbilityID(sKey);
-				if (SH_AssignHeroAbility(HeroID, AbilityID))
+				switch (SH_AssignHeroAbility(HeroID, AbilityID))
 				{
-					LogError("Attempting to assign Hero '%s' the ability '%s' but the ability doesn't exist.", sName, sKey);
+					case false: LogError("Error while assigning the ability '%s' to the Hero '%s', the ability doesn't exist.", sKey, sName);
 				}
 			}
 			
@@ -945,20 +956,20 @@ public int Native_RegisterHero(Handle hPlugin, int iParams)
 	}
 	
 	char sName[MAX_HERO_NAME_LENGTH];
-	GetNativeString(1, sName, sizeof(sName));
+	GetNativeString(2, sName, sizeof(sName));
 	
 	char sDescription[MAX_HERO_DESCRIPTION_LENGTH];
-	GetNativeString(2, sDescription, sizeof(sDescription));
+	GetNativeString(3, sDescription, sizeof(sDescription));
 	
-	int iRequiredLevel = GetNativeCell(3);
+	int iRequiredLevel = GetNativeCell(4);
 	
 	char sModel[PLATFORM_MAX_PATH];
-	GetNativeString(4, sModel, sizeof(sModel));
+	GetNativeString(5, sModel, sizeof(sModel));
 	
 	char sFlags[32];
-	GetNativeString(5, sFlags, sizeof(sFlags));
+	GetNativeString(6, sFlags, sizeof(sFlags));
 	
-	return RegisterNewHero(SH_LOAD_PLUGIN, hPlugin, sName, sDescription, iRequiredLevel, sModel, sFlags);
+	return RegisterNewHero(view_as<SH_OnHeroRegistered>GetNativeFunction(1), SH_LOAD_PLUGIN, hPlugin, sName, sDescription, iRequiredLevel, sModel, sFlags);
 }
 
 //Retrieves the index of the hero the client is playing.

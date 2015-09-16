@@ -28,7 +28,7 @@ bool bIsLateLoad;
 
 //Query Strings
 char sQ_Auth_Check[] = "SELECT level, experience FROM `%s` WHERE steamid = '%s';";
-char sQ_Auth_Insert[] = "INSERT INTO `%s` (name, steamid, level, experience) VALUES ('%s', '%s', '%i', '1');";
+char sQ_Auth_Insert[] = "INSERT INTO `%s` (name, steamid, level, experience) VALUES ('%s', '%s', '%i', '0');";
 char sQ_Auth_CreateTable[] = "CREATE TABLE IF NOT EXISTS `%s` (`id` int(11) NOT NULL auto_increment, `name` varchar(32) NOT NULL, `steamid` varchar(32) default NULL, `level` int(11) default NULL, `experience` int(11) default NULL, PRIMARY KEY  (`id`)) ENGINE = MyISAM  DEFAULT CHARSET = utf8;";
 char sQ_Disc_Save[] = "UPDATE `%s` SET level = '%i', experience = '%i' WHERE steamid = '%s';";
 char sQ_SaveHeroes_Start[] = "INSERT INTO `%s` VALUES (%s";
@@ -425,6 +425,8 @@ public int CreateClientSHData(Handle owner, Handle hndl, const char[] sError, an
 		CloseHandle(data);
 		return;
 	}
+	
+	iLevel[client] = iStartingLevel;
 	
 	char sQuery[MAX_QUERY_SIZE];
 	Format(sQuery, sizeof(sQuery), sQ_Auth_Check, cv_sTableName, sAuth);

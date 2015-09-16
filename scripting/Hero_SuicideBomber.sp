@@ -35,7 +35,7 @@ public void OnPluginStart()
 
 public void SH_OnReady()
 {
-	Hero = SH_RegisterHero("Suicide Bomber", "Explode when you die.", 1, "", "");
+	Hero = SH_RegisterHero(INVALID_FUNCTION, "Suicide Bomber", "Explode when you die.", 1, "", "");
 }
 
 public void OnMapStart()

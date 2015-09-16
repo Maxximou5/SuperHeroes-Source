@@ -24,7 +24,12 @@ public void OnPluginStart()
 
 public void SH_OnReady()
 {
-	Hero = SH_RegisterHero("Nightcrawler", "Teleport through walls.", 1, "", "");
+	SH_RegisterHero(OnHeroCreated, "Nightcrawler", "Teleport through walls.", 1, "", "");
+}
+
+public void OnHeroCreated(int HeroID, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel, const char[] sFlags)
+{
+	Hero = HeroID;
 	
 	Ability = SH_RegisterAbility("TeleportNoclip", "Teleport Noclip", "Teleport thorugh walls.", 15, OnAbilityUse);
 	SH_AssignHeroAbility(Hero, Ability);

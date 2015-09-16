@@ -24,7 +24,12 @@ public void OnPluginStart()
 
 public void SH_OnReady()
 {
-	Hero = SH_RegisterHero("Hulk", "Stun your enemies and yourself.", 1, "", "");
+	SH_RegisterHero(OnHeroCreated, "Hulk", "Stun your enemies and yourself.", 1, "", "");
+}
+
+public void OnHeroCreated(int HeroID, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel, const char[] sFlags)
+{
+	Hero = HeroID;
 	
 	Ability = SH_RegisterAbility("SmashEnemies", "Smash Enemies", "Allows heroes to smash your enemies.", 5, OnAbilityUse);
 	SH_AssignHeroAbility(Hero, Ability);

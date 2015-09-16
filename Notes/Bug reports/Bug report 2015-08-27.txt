@@ -1,0 +1,73 @@
+Bug report for SuperHero-Mod:
+
+General:
+1. Need to be admin to choose heroes.
+2. When using a power e.g +Streamline you press once and it shoots a Streamline then it stays until you press again. It should be toggled when you press down the button and disappear when you release the button.
+3. Heroes are not working. Says "You are currently not this Hero".
+4. Binding powers should be easier. Like "Bind Mouse3 +POWER1" +POWER2, +POWER3.
+5. After you have chosen a Hero they should disappear from the menu list.
+6. When joining the server you start at level 1, but can't reach level 2 since the required xp on level 1 is 0/0.
+7. The ability to choose the same here multiple times should not be possible. This bug is linked to bug number 5.
+8. Chosen heroes not saved after disconnect.
+9. Wanted command: sm_setlevel <player> <level>
+ 
+
+
+Hero testing:
+1. Batgirl:
+- When using the Streamline the movement speed should be at least 4 times as fast.
+- There would be nice with a hooking sound.
+
+2. Dracula:
+- Not stealing any health from enemies.
+
+3. Cyclops:
+- Power not working. Nothing happens when using +ShootLasers.
+
+4. Flash: (Nothing Major)
+- Should maybe be just a little bit slower?
+- Feels like the jump is speeded up, can it be changed somehow?
+
+5. Hulk:
+- Power not working, nothing happening.
+
+- Sometimes gives you error "Your hero ability is currently on cooldown: 20", rejoining the server solves this issue and then the same as 1st bug on this ulk "..nothing happening."
+
+6. Invisible Man: (Major problem)
+- Getting major errors multiple times (about 200 times a second) in console which slows server. Message:
+"L 08/29/2015 - 21:34:37: [SM] Native "GetEntPropEnt" reported: Property "m_hDisguiseWeapon" not found (entity 1/player)
+L 08/29/2015 - 21:34:37: [SM] Displaying call stack trace for plugin "Hero_Invisibleman.smx":
+L 08/29/2015 - 21:34:37: [SM]   [0]  Line 111, D:\SourcePawn\SuperheroMod\scripting\Hero_Invisibleman.sp::Invisible()
+L 08/29/2015 - 21:34:37: [SM]   [1]  Line 46, D:\SourcePawn\SuperheroMod\scripting\Hero_Invisibleman.sp::OnPlayerRunCmd()"
+
+7. Mystique: (Major problem)
+- Power not working, crashes server, and replies with error (in server console): 
+"1/ - player:  UTIL_SetModel:  not precached: models/player/ct_urban.mdl"
+- And gives back an "Engine Error" window. Which is specified in "Engine Error.png"
+
+8. Naruto:
+- Power not working, nothing happening.
+
+9. Nightcrawler:
+- Should be a lot slower, like half the speed.
+- Should be slayed if stuck in a wall. (Otherwise good input with getting teleported back to start position, maybe use it with another hero somehow?)
+
+10. Sandman:
+- Power not working, nothing happening.
+- Chosing sandman while already having flash equipped will make you have to rechoose flash in order for his speed to work.
+- Sometimes gives you error "Your hero ability is currently on cooldown: 15", rejoining the server solves this issue and then the same as 1st bug on this Sandman "..nothing happening."
+
+11. Spiderman:
+- Chosing Spiderman while already having flash equipped will make you have to rechoose flash in order for his speed to work.
+- Web graphics working but movements is currently very messy.
+- Should use the same graphics as batgirl instead of current.
+
+12. Suicide Bomber:
+- Not exploding when dying.
+
+13. Sylar:
+- Not giving any health when killing enemies.
+
+14. Torch:
+- Power not working, nothing happens.
+
