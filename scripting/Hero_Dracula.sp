@@ -30,9 +30,9 @@ public void OnMapStart()
 
 public void SH_OnTakeDamage_Post(int client, int attacker, int inflictor, float damage, int damagetype, int weapon, float damageForce[3], float damagePosition[3])
 {
-	if (SH_IsValidPlayer(client, true, true) && SH_IsValidPlayer(attacker, true) && client != attacker && GetClientTeam(client) != GetClientTeam(attacker))
+	if (SH_IsValidPlayer(client, false, true) && SH_IsValidPlayer(attacker, false, true) && client != attacker && GetClientTeam(client) != GetClientTeam(attacker))
 	{
-		if (!SH_IsClientHero(client, Hero))
+		if (!SH_IsClientHero(attacker, Hero))
 		{
 			return;
 		}

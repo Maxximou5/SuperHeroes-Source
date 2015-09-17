@@ -13,9 +13,13 @@
 //Globals
 int Hero;
 int Ability;
+
+char sLaserBeam[] = "materials/sprites/laserbeam.vmt";
+char sHalo[] = "materials/sprites/halo.vmt";
+char ThunderClapSound[] = "SH/ThunderClapCaster.wav";
+
 int BeamSprite;
 int HaloSprite;
-char ThunderClapSound[] = "SH/ThunderClapCaster.wav";
 
 public void OnPluginStart()
 {
@@ -39,8 +43,9 @@ public void OnHeroCreated(int HeroID, const char[] sName, const char[] sDescript
 
 public void OnMapStart()
 {
-	BeamSprite = PrecacheModel("materials/sprites/lgtning.vmt");
-	HaloSprite = PrecacheModel("materials/sprites/halo01.vmt");
+	BeamSprite = PrecacheModel(sLaserBeam);
+	HaloSprite = PrecacheModel(sHalo);
+	
 	PrecacheSound(ThunderClapSound);
 }
 
@@ -62,7 +67,7 @@ public void OnAbilityUse(int client, int HeroID, const char[] sName, const char[
 	
 	for (int i = 1; i <= MaxClients; i++)
 	{
-		if (SH_IsValidPlayer(i, true) && GetClientTeam(i) != ClaperTeam)
+		if (SH_IsValidPlayer(i) && GetClientTeam(i) != ClaperTeam)
 		{
 			GetClientAbsOrigin(i, VecPos);
 			

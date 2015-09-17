@@ -13,6 +13,10 @@
 //Globals
 int Hero;
 int Ability;
+
+char sLaserBeam[] = "materials/sprites/laserbeam.vmt";
+char sHalo[] = "materials/sprites/halo.vmt";
+
 int BeamSprite;
 int HaloSprite;
 
@@ -38,15 +42,15 @@ public void OnHeroCreated(int HeroID, const char[] sName, const char[] sDescript
 
 public void OnMapStart()
 {
-	BeamSprite = PrecacheModel("materials/sprites/lgtning.vmt");
-	HaloSprite = PrecacheModel("materials/sprites/halo01.vmt");
+	BeamSprite = PrecacheModel(sLaserBeam);
+	HaloSprite = PrecacheModel(sHalo);
 }
 
 public void OnAbilityUse(int client, int HeroID, const char[] sName, const char[] sDisplayName, const char[] sDescription)
 {
 	for (int i = 1; i <= MaxClients; i++)
 	{
-		if (!SH_IsValidPlayer(i, true))
+		if (!SH_IsValidPlayer(i))
 		{
 			continue;
 		}

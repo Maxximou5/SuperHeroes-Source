@@ -86,6 +86,7 @@ public void OnPluginStart()
 	
 	RegConsoleCmd("sm_progress", ShowClientProgress);
 	RegAdminCmd("sm_givexp", GiveClientExperience, ADMFLAG_ROOT);
+	RegAdminCmd("sm_setlevel", SetLevel, ADMFLAG_ROOT);
 	
 	HookEvent("player_death", OnPlayerDeath);
 	
@@ -509,10 +510,43 @@ public Action GiveClientExperience(int client, int args)
 		return Plugin_Handled;
 	}
 	
+	int experience = StringToInt(sArg2);
+	
 	for (int i = 0; i < iCount; i++)
 	{
-		AddClientExperience(iList[i], StringToInt(sArg2));
+		AddClientExperience(iList[i], experience);
 	}
+	
+	PrintToChat(client, "Client(s) have had %i added to their experience.", experience);
+	
+	return Plugin_Handled;
+}
+
+public Action SetLevel(int client, int args)
+{
+	char sArg[64];
+	GetCmdArg(1, sArg, sizeof(sArg));
+	
+	char sArg2[64];
+	GetCmdArg(2, sArg2, sizeof(sArg2));
+	
+	char sTargetName[MAX_TARGET_LENGTH]; int iList[MAXPLAYERS]; bool bML;
+	int iCount = ProcessTargetString(sArg, client, iList, MAXPLAYERS, COMMAND_FILTER_ALIVE, sTargetName, sizeof(sTargetName), bML);
+	
+	if (iCount <= 0)
+	{
+		ReplyToTargetError(client, iCount);
+		return Plugin_Handled;
+	}
+	
+	int level = StringToInt(sArg2);
+	
+	for (int i = 0; i < iCount; i++)
+	{
+		SetClientLevel(iList[i], level);
+	}
+	
+	PrintToChat(client, "Client(s) have been set to level %i.", level);
 	
 	return Plugin_Handled;
 }
@@ -607,6 +641,17 @@ void AddClientExperience(int client, int XP)
 		
 		PrintToChat(client, "You have reached level %i!", iLevel[client]);
 	}
+}
+
+void SetClientLevel(int client, int Level)
+{
+	if (!SH_IsValidPlayer(client, true) || Level <= 0 || Level > iMaxLevel)
+	{
+		return;
+	}
+	
+	iLevel[client] = Level;
+	PrintToChat(client, "Your level has been set to %i.", Level);
 }
 
 //////////////////

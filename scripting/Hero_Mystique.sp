@@ -12,10 +12,23 @@
 int Hero;
 int Ability;
 bool change[MAXPLAYERS + 1];
+char sCurrent[MAXPLAYERS + 1][PLATFORM_MAX_PATH];
+
+Handle hCounterTerroristModels;
+Handle hTerroristModels;
 
 public void OnPluginStart()
 {
+	hCounterTerroristModels = CreateArray(ByteCountToCells(PLATFORM_MAX_PATH));
+	hTerroristModels = CreateArray(ByteCountToCells(PLATFORM_MAX_PATH));
 	
+	HookEvent("player_spawn", OnPlayerSpawn);
+}
+
+public void OnMapStart()
+{
+	ClearArray(hCounterTerroristModels);
+	ClearArray(hTerroristModels);
 }
 
 public void SH_OnReady()
@@ -37,34 +50,93 @@ public void OnAbilityUse(int client, int HeroID, const char[] sName, const char[
 {
 	switch (GetClientTeam(client))
 	{
+		//Terrorist
 		case 2:
 		{
 			if (change[client])
 			{
-				SetEntityModel(client, "models/player/ct_urban.mdl");
+				SetEntityModel(client, sCurrent[client]);
 				change[client] = false;
-				PrintHintText(client, "Disguise : Off");
 			}
 			else
 			{
-				SetEntityModel(client, "models/player/t_leet.mdl");
+				int arraysize = GetArraySize(hTerroristModels);
+				
+				if (arraysize == 0)
+				{
+					return;
+				}
+				
+				GetClientModel(client, sCurrent[client], PLATFORM_MAX_PATH);
+				
+				int random = GetRandomInt(0, arraysize);
+				
+				char sNewModel[PLATFORM_MAX_PATH];
+				GetArrayString(hTerroristModels, random, sNewModel, sizeof(sNewModel));
+				
+				SetEntityModel(client, sNewModel);
 				change[client] = true;
-				PrintHintText(client, "Disguise : On");
 			}
 		}
+		//Counter-Terrorist
 		case 3:
 		{
 			if (change[client])
 			{
-				SetEntityModel(client, "models/player/t_leet.mdl");
+				SetEntityModel(client, sCurrent[client]);
 				change[client] = false;
-				PrintHintText(client, "Disguise : Off");
 			}
 			else
 			{
-				SetEntityModel(client, "models/player/ct_urban.mdl");
+				int arraysize = GetArraySize(hCounterTerroristModels);
+				
+				if (arraysize == 0)
+				{
+					return;
+				}
+				
+				GetClientModel(client, sCurrent[client], PLATFORM_MAX_PATH);
+				
+				int random = GetRandomInt(0, arraysize);
+				
+				char sNewModel[PLATFORM_MAX_PATH];
+				GetArrayString(hCounterTerroristModels, random, sNewModel, sizeof(sNewModel));
+				
+				SetEntityModel(client, sNewModel);
 				change[client] = true;
-				PrintHintText(client, "Disguise : On");
+			}
+		}
+	}
+	
+	PrintHintText(client, "Disguise : %s", change[client] ? "On" : "Off");
+}
+
+public void OnPlayerSpawn(Handle hEvent, char[] sName, bool bBroadcast)
+{
+	int client = GetClientOfUserId(GetEventInt(hEvent, "userid"));
+	
+	if (IsClientInGame(client) && IsPlayerAlive(client))
+	{
+		char sPlayerModel[PLATFORM_MAX_PATH];
+		GetClientModel(client, sPlayerModel, sizeof(sPlayerModel));
+		
+		switch (GetClientTeam(client))
+		{
+			//Terrorist
+			case 2:
+			{
+				if (!FindStringInArray(hTerroristModels, sPlayerModel))
+				{
+					PushArrayString(hTerroristModels, sPlayerModel);
+				}
+			}
+			//Counter-Terrorist
+			case 3:
+			{
+				if (!FindStringInArray(hCounterTerroristModels, sPlayerModel))
+				{
+					PushArrayString(hCounterTerroristModels, sPlayerModel);
+				}
 			}
 		}
 	}

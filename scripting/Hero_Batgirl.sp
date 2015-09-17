@@ -12,6 +12,8 @@
 int Hero;
 int Ability;
 
+char sSoundEffect[] = "training/popup.wav";
+
 bool isHooked[MAXPLAYERS + 1];
 float hookOrigin[MAXPLAYERS + 1][3];
 int traceDeny;
@@ -46,7 +48,7 @@ public void OnClientDisconnect(int client)
 
 public void OnMapStart()
 {
-	PrecacheSound("weapons/crossbow/hit1.wav");
+	PrecacheSound(sSoundEffect);
 	beamPrecache = PrecacheModel("materials/sprites/laserbeam.vmt");
 }
 
@@ -100,7 +102,7 @@ void Bat_Attach(int client)
 		hookOrigin[client] = end;
 		
 		SetEntityGravity(client, 0.001);
-		EmitSoundToAll("weapons/crossbow/hit1.wav", client);
+		EmitSoundToAll(sSoundEffect, client);
 		
 		origin[2] += 20.0;
 
@@ -148,7 +150,7 @@ public Action HookTask(Handle timer, any client)
 	float distance = GetVectorDistance(hookOrigin[client], origin);
 	if (distance < 100.0)
 	{
-		float scale = (300.0 * (100.0 - distance * 4.0) / 100.0);
+		float scale = (600.0 * (100.0 - distance * 4.0) / 100.0);	//600.0 = speed
 		ScaleVector(velocity, (scale > 10.0) ? scale : 10.0);
 	}
 	else

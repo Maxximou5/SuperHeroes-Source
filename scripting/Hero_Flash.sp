@@ -23,7 +23,7 @@ public void SH_OnAssignedHero(int client, int HeroID, const char[] sName, const 
 {
 	if (HeroID == Hero)
 	{
-		SetClientSpeed(client, 2.0);
+		SetClientSpeed(client, 1.5);
 	}
 }
 
@@ -45,7 +45,7 @@ public void OnPlayerSpawn(Handle hEvent, char[] sName, bool bBroadcast)
 		return;
 	}
 	
-	SetClientSpeed(client, 2.0);
+	SetClientSpeed(client, 1.5);
 }
 
 void SetClientSpeed(int client, float speed)

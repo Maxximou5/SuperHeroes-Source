@@ -118,13 +118,6 @@ void Invisible(int client, float percent)
 			}
 		}
 	}
-	
-	int iWeapon = GetEntPropEnt(client, Prop_Send, "m_hDisguiseWeapon");
-	
-	if(iWeapon > MaxClients && IsValidEntity(iWeapon))
-	{
-		SetEntityColor(iWeapon, iColor);
-	}
 }
 
 void SetEntityColor(int iEntity, int iColor[4])
