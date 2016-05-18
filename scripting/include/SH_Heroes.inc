@@ -7,11 +7,12 @@
 #define MAX_HEROES 512
 #define MAX_HERO_NAME_LENGTH 64
 #define MAX_HERO_DESCRIPTION_LENGTH 128
+#define MAX_HERO_GROUP_LENGTH 128
 
 //Callback Typesets
 typeset SH_OnHeroRegistered
 {
-	function void(int HeroID, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel, const char[] sFlags);
+	function void(int HeroID, const char[] sName, const char[] sDescription, const char[] sGroup, int iRequiredLevel, const char[] sModel, const char[] sFlags);
 }
 
 //////////////////
@@ -23,13 +24,14 @@ typeset SH_OnHeroRegistered
  * @param callback			Function called when the hero is created.
  * @param sName				Name of the Hero.
  * @param sDescription		Description for the Hero.
+ * @param sGroup			The group the Hero should be assigned to. (default = 'superhero', star wars = 'starwars')
  * @param iRequiredLevel	Required level for this hero to be played.
  * @param sModel			Model to equip to the client as this hero. (Relative to the models folder)
  * @param sFlags			Flags to give a hero if flag requirements are enabled. (Empty means no flags)
  *
  * @return	index/id of the hero.
  **/
-native int SH_RegisterHero(SH_OnHeroRegistered callback, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel, const char[] sFlags);
+native int SH_RegisterHero(SH_OnHeroRegistered callback, const char[] sName, const char[] sDescription, const char[] sGroup, int iRequiredLevel = 1, const char[] sModel = "", const char[] sFlags = "");
 
 /**
  * Retrieves the index/ID of the hero the client is playing. Since the array is filled with values, you will need the amount in order to pull the right amount from the array to use.

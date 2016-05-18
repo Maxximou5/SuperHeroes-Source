@@ -39,7 +39,7 @@ Handle hAbilityCommandTrie;
 int iHeroAbility[MAX_HEROES] =  { -1, ... };
 
 //Client Globals
-int iCooldowns[MAXPLAYERS + 1];
+int iCooldowns[MAXPLAYERS + 1][512];
 bool bNoAbility[MAXPLAYERS + 1];
 
 //Plugin Info
@@ -112,11 +112,16 @@ public void OnConfigsExecuted()
 //ConVar Changes
 public void OnConVarsChanged(Handle convar, const char[] oldValue, const char[] newValue)
 {
+	if (StrEqual(oldValue, newValue))
+	{
+		return;
+	}
+	
 	int value = StringToInt(newValue);
 	
 	if (convar == hConVars[0])
 	{
-		cv_bStatus = view_as<bool>value;
+		cv_bStatus = view_as<bool>(value);
 	}
 }
 
@@ -127,7 +132,10 @@ public void OnClientPutInServer(int client)
 		return;
 	}
 	
-	iCooldowns[client] = 0;
+	for (int i = 0; i < 512; i++)
+	{
+		iCooldowns[client][i] = 0;
+	}
 	bNoAbility[client] = false;
 	
 	SDKHook(client, SDKHook_OnTakeDamage, OnTakeDamage);
@@ -141,7 +149,10 @@ public void OnClientDisconnect(int client)
 		return;
 	}
 	
-	iCooldowns[client] = 0;
+	for (int i = 0; i < 512; i++)
+	{
+		iCooldowns[client][i] = 0;
+	}
 	bNoAbility[client] = false;
 }
 
@@ -197,32 +208,6 @@ public void OnTakeDamage_Post(int victim, int attacker, int inflictor, float dam
 	Call_Finish(result);
 }
 
-//Timer to handle cooldown logic for abilities.
-public Action AbilityCooldown(Handle hTimer, any data)
-{
-	if (!cv_bStatus)
-	{
-		return Plugin_Stop;
-	}
-	
-	int client = GetClientOfUserId(client);
-	
-	if (!SH_IsValidPlayer(client, true, true))
-	{
-		return Plugin_Stop;
-	}
-	
-	iCooldowns[client]--;
-	
-	if (iCooldowns[client] <= 0)
-	{
-		iCooldowns[client] = 0;
-		return Plugin_Stop;
-	}
-	
-	return Plugin_Continue;
-}
-
 //Registers a new ability, most of the logic for handling the ability is put into a pack which is then used later on usage or information being pulled.
 int RegisterAbility(const char[] sName, const char[] sDisplayName, const char[] sDescription, SH_UseAbilityCallback callback_press = INVALID_FUNCTION, SH_UseAbilityCallback callback_release = INVALID_FUNCTION, int iCooldown = 0, Handle hPlugin)
 {
@@ -276,7 +261,7 @@ int GetAbilityID(const char[] sName)
 //Retrieves an abilities name from its ID.
 bool GetAbilityName(int AbilityID, char[] sAbilityName, int size)
 {
-	Handle hPack = CloneHandle(view_as<Handle>GetArrayCell(hAbilityPacks, AbilityID));
+	Handle hPack = CloneHandle(view_as<Handle>(GetArrayCell(hAbilityPacks, AbilityID)));
 	ResetPack(hPack);
 	
 	ReadPackCell(hPack);
@@ -304,7 +289,7 @@ bool GetAbilityName(int AbilityID, char[] sAbilityName, int size)
 //Retrieves an abilities display name from its ID.
 bool GetAbilityDisplayName(int AbilityID, char[] sAbilityName, int size)
 {
-	Handle hPack = CloneHandle(view_as<Handle>GetArrayCell(hAbilityPacks, AbilityID));
+	Handle hPack = CloneHandle(view_as<Handle>(GetArrayCell(hAbilityPacks, AbilityID)));
 	ResetPack(hPack);
 	
 	ReadPackCell(hPack);
@@ -332,7 +317,7 @@ bool GetAbilityDisplayName(int AbilityID, char[] sAbilityName, int size)
 //Retrieves an abilities description from its ID.
 bool GetAbilityDescription(int AbilityID, char[] sAbilityDescription, int size)
 {
-	Handle hPack = CloneHandle(view_as<Handle>GetArrayCell(hAbilityPacks, AbilityID));
+	Handle hPack = CloneHandle(view_as<Handle>(GetArrayCell(hAbilityPacks, AbilityID)));
 	ResetPack(hPack);
 	
 	ReadPackCell(hPack);
@@ -360,7 +345,7 @@ bool GetAbilityDescription(int AbilityID, char[] sAbilityDescription, int size)
 //Retrieves an abilities cooldown from its ID.
 int GetAbilityCooldown(int AbilityID)
 {
-	Handle hPack = CloneHandle(view_as<Handle>GetArrayCell(hAbilityPacks, AbilityID));
+	Handle hPack = CloneHandle(view_as<Handle>(GetArrayCell(hAbilityPacks, AbilityID)));
 	ResetPack(hPack);
 	
 	ReadPackCell(hPack);
@@ -409,8 +394,9 @@ public Action OnAbilityNativeUse(int client, int args)
 	
 	char sCommand[MAX_ABILITY_COMMAND_LENGTH];
 	GetCmdArg(0, sCommand, sizeof(sCommand));
+	String_ToLower(sCommand, sCommand, sizeof(sCommand));
 	
-	bool bPress = view_as<bool>StrContains(sCommand, "+") != -1;
+	bool bPress = view_as<bool>(StrContains(sCommand, "+") != -1);
 	
 	char sPreview[MAX_ABILITY_NAME_LENGTH];
 	strcopy(sPreview, sizeof(sPreview), sCommand);
@@ -435,7 +421,7 @@ void UseAbility(int client, int AbilityID, bool bPress)
 	char sAbilityName[MAX_ABILITY_NAME_LENGTH];
 	SH_GetAbilityName(AbilityID, sAbilityName, sizeof(sAbilityName));
 	
-	PrintToServer("%N - %s[%i] - %s[%i] - %s", client, sAbilityName, AbilityID, sHeroName, HeroID, bPress ? "True" : "False");
+	//SH_LogDebug("%N - %s[%i] - %s[%i] - %s", client, sAbilityName, AbilityID, sHeroName, HeroID, bPress ? "True" : "False");
 	
 	if (!SH_IsClientHero(client, HeroID))
 	{
@@ -447,12 +433,12 @@ void UseAbility(int client, int AbilityID, bool bPress)
 		return;
 	}
 	
-	Handle hPack = CloneHandle(view_as<Handle>GetArrayCell(hAbilityPacks, AbilityID));
+	Handle hPack = CloneHandle(view_as<Handle>(GetArrayCell(hAbilityPacks, AbilityID)));
 	ResetPack(hPack);
 	
-	Handle plugin = view_as<Handle>ReadPackCell(hPack);
-	SH_UseAbilityCallback callback_press = view_as<SH_UseAbilityCallback>ReadPackFunction(hPack);
-	SH_UseAbilityCallback callback_release = view_as<SH_UseAbilityCallback>ReadPackFunction(hPack);
+	Handle plugin = view_as<Handle>(ReadPackCell(hPack));
+	SH_UseAbilityCallback callback_press = view_as<SH_UseAbilityCallback>(ReadPackFunction(hPack));
+	SH_UseAbilityCallback callback_release = view_as<SH_UseAbilityCallback>(ReadPackFunction(hPack));
 	
 	char sName[MAX_ABILITY_NAME_LENGTH];
 	ReadPackString(hPack, sName, sizeof(sName));
@@ -467,27 +453,46 @@ void UseAbility(int client, int AbilityID, bool bPress)
 	
 	CloseHandle(hPack);
 	
-	if (!bPress && callback_release == INVALID_FUNCTION)
+	switch (bPress)
 	{
-		PrintToServer("No release function present for the Ability %s[%i].", sDisplayName, AbilityID);
-		return;
+		case true:
+		{
+			if (iCooldowns[client][AbilityID] > 0)
+			{
+				PrintToChat(client, "Your hero ability is currently on cooldown: %i", iCooldowns[client][AbilityID]);
+				return;
+			}
+			
+			Call_StartFunction(plugin, callback_press);
+			Call_PushCell(client);
+			Call_PushString(sName);
+			Call_PushString(sDisplayName);
+			Call_PushString(sDescription);
+			Call_Finish();
+			
+			iCooldowns[client][AbilityID] = iCooldown;
+			
+			Handle hPack2;
+			CreateDataTimer(1.0, AbilityCooldown, hPack2, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+			WritePackCell(hPack2, GetClientUserId(client));
+			WritePackCell(hPack2, AbilityID);
+		}
+		case false:
+		{
+			if (callback_release == INVALID_FUNCTION)
+			{
+				//SH_LogDebug("No release function present for the Ability %s[%i].", sDisplayName, AbilityID);
+				return;
+			}
+			
+			Call_StartFunction(plugin, callback_release);
+			Call_PushCell(client);
+			Call_PushString(sName);
+			Call_PushString(sDisplayName);
+			Call_PushString(sDescription);
+			Call_Finish();
+		}
 	}
-	
-	if (iCooldown < iCooldowns[client])
-	{
-		PrintToChat(client, "Your hero ability is currently on cooldown: %i", iCooldowns[client]);
-		return;
-	}
-	
-	Call_StartFunction(plugin, bPress ? callback_press : callback_release);
-	Call_PushCell(client);
-	Call_PushString(sName);
-	Call_PushString(sDisplayName);
-	Call_PushString(sDescription);
-	Call_Finish();
-	
-	iCooldowns[client] = iCooldown;
-	CreateTimer(1.0, AbilityCooldown, GetClientUserId(client), TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 }
 
 //Re-enable the clients ability after cooldown is registered if the ability was successful.
@@ -495,10 +500,39 @@ public Action NoAbilityTimer(Handle hTimer, any data)
 {
 	int client = GetClientOfUserId(data);
 	
-	if (!SH_IsValidPlayer(client))
+	if (SH_IsValidPlayer(client))
 	{
 		bNoAbility[client] = false;
 	}
+}
+
+//Timer to handle cooldown logic for abilities.
+public Action AbilityCooldown(Handle hTimer, any data)
+{
+	if (!cv_bStatus)
+	{
+		return Plugin_Stop;
+	}
+	
+	ResetPack(data);
+	
+	int client = GetClientOfUserId(ReadPackCell(data));
+	int AbilityID = ReadPackCell(data);
+	
+	if (!SH_IsValidPlayer(client, true, true))
+	{
+		return Plugin_Stop;
+	}
+	
+	iCooldowns[client][AbilityID]--;
+	
+	if (iCooldowns[client][AbilityID] <= 0)
+	{
+		iCooldowns[client][AbilityID] = 0;
+		return Plugin_Stop;
+	}
+	
+	return Plugin_Continue;
 }
 
 //Converts an AbilityID to a HeroID. (Garbage atm)
@@ -513,6 +547,20 @@ int AbilityIDToHeroID(int AbilityID)
 	}
 	
 	return -1;
+}
+
+void String_ToLower(const char[] input, char[] output, int size)
+{
+	size--;
+
+	int x = 0;
+	while (input[x] != '\0' && x < size)
+	{
+		output[x] = CharToLower(input[x]);
+		x++;
+	}
+
+	output[x] = '\0';
 }
 
 //////////////////
@@ -532,7 +580,7 @@ public int Native_RegisterAbility(Handle hPlugin, int iParams)
 	
 	int iCooldown = GetNativeCell(4);
 	
-	return RegisterAbility(sName, sDisplayName, sDescription, view_as<SH_UseAbilityCallback>GetNativeFunction(5), view_as<SH_UseAbilityCallback>GetNativeFunction(6), iCooldown, hPlugin);
+	return RegisterAbility(sName, sDisplayName, sDescription, view_as<SH_UseAbilityCallback>(GetNativeFunction(5)), view_as<SH_UseAbilityCallback>(GetNativeFunction(6)), iCooldown, hPlugin);
 }
 
 //Assigns a specific ability to a hero.
@@ -591,23 +639,32 @@ public int Native_GetTargetInViewCone(Handle plugin, int numParams)
 	
 	int target = GetNativeCell(2);
 	
-	if (SH_IsValidPlayer(target, false, true))
+	if (!SH_IsValidPlayer(target, false, true))
 	{
 		return false;
 	}
 	
-	float angle = view_as<float>GetNativeCell(3);
+	if (client == target)
+	{
+		return false;
+	}
+	
+	float angle = view_as<float>(GetNativeCell(3));
 	
 	if (angle < 0.0 || angle > 360.0)
 	{
 		return false;
 	}
 	
-	float distance = view_as<float>GetNativeCell(4);
-	bool heightcheck = view_as<bool>GetNativeCell(5);
-	bool negativeangle = view_as<bool>GetNativeCell(6);
+	float distance = view_as<float>(GetNativeCell(4));
+	bool heightcheck = view_as<bool>(GetNativeCell(5));
+	bool negativeangle = view_as<bool>(GetNativeCell(6));
 	
-	return IsTargetInSightRange(client, target, angle, distance, heightcheck, negativeangle);
+	bool bIsInSight = IsTargetInSightRange(client, target, angle, distance, heightcheck, negativeangle);
+	
+	SH_LogDebug("Cone Check: %s - [%N] [%N] [%f] [%f] [%s] [%s]", bIsInSight ? "True" : "False", client, target, angle, distance, heightcheck ? "True" : "False", negativeangle ? "True" : "False");
+	
+	return bIsInSight;
 }
 
 bool IsTargetInSightRange(int client, int target, float angle = 90.0, float distance = 0.0, bool heightcheck = true, bool negativeangle = false)
@@ -763,20 +820,20 @@ public int Native_ListAbilities(Handle plugin, int numParams)
 		return false;
 	}
 	
+	int AbilityID = iHeroAbility[HeroID];
+	
 	int Method = GetNativeCell(2);
 	int size = GetNativeCell(4);
-	Handle hMenu = view_as<Handle>GetNativeCell(5);
+	Handle hMenu = view_as<Handle>(GetNativeCell(5));
 	
 	switch (Method)
 	{
 		case 1:
 		{
-			RefillAbilitiesMenu(HeroID, hMenu);
+			RefillAbilitiesMenu(AbilityID, hMenu);
 		}
 		case 2:
 		{
-			int AbilityID = iHeroAbility[HeroID];
-			
 			char sDisplayName[64];
 			SH_GetAbilityDisplayName(AbilityID, sDisplayName, sizeof(sDisplayName));
 			
@@ -793,9 +850,12 @@ public int Native_ListAbilities(Handle plugin, int numParams)
 	return true;
 }
 
-void RefillAbilitiesMenu(int HeroID, Handle hMenu)
+void RefillAbilitiesMenu(int AbilityID, Handle hMenu)
 {
-	int AbilityID = iHeroAbility[HeroID];
+	if (hMenu == null)
+	{
+		return;
+	}
 	
 	char sDisplay[64];
 	GetAbilityName(AbilityID, sDisplay, sizeof(sDisplay));

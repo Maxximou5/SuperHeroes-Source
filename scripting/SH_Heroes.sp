@@ -19,7 +19,7 @@
 #define PLUGIN_VERSION "1.0.0"
 
 //#define DEBUG				//Enable/Disable Debugs
-#define CONVAR_NUMBER 8		//Number of ConVars for this plugin.
+#define CONVAR_NUMBER 9		//Number of ConVars for this plugin.
 
 //SH Load Types
 #define SH_LOAD_CONFIG 1	//Hero is loading from a configuration file.
@@ -32,7 +32,7 @@
 
 //ConVar Globals
 Handle hConVars[CONVAR_NUMBER];
-bool cv_bStatus; int cv_iLoadType; bool cv_bLoadModels; char cv_sConfigLocation[PLATFORM_MAX_PATH]; bool cv_bRespectFlags; bool cv_bRespectLevel; bool cv_bShowDescriptions; int cv_iClientHeroes;
+bool cv_bStatus; int cv_iLoadType; bool cv_bLoadModels; char cv_sConfigLocation[PLATFORM_MAX_PATH]; bool cv_bRespectFlags; bool cv_bRespectLevel; bool cv_bShowDescriptions; int cv_iClientHeroes; char cv_sGroup[MAX_HERO_GROUP_LENGTH];
 
 //Natives/Forwards
 Handle hF_OnAssignedHero;
@@ -45,6 +45,7 @@ enum Heroes
 {
 	String:Hero_Name[MAX_HERO_NAME_LENGTH],  //Hero Name
 	String:Hero_Description[MAX_HERO_DESCRIPTION_LENGTH],  //Hero Description
+	String:Hero_Group[MAX_HERO_DESCRIPTION_LENGTH],  //Hero Group
 	Hero_RequiredLevel,  //Hero Required Level - The level required for clients to pick this hero.
 	String:Hero_Model[PLATFORM_MAX_PATH],  //Model to assign player.
 	String:Hero_Flags[32],  //Flags assigned to heroes.
@@ -105,6 +106,7 @@ public void OnPluginStart()
 	hConVars[5] = CreateConVar("sm_superheroes_heroes_respect_levels", "1", "Check the required level specified for the hero and respect it.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	hConVars[6] = CreateConVar("sm_superheroes_heroes_show_descriptions", "1", "Show descriptions in the heroes menu.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	hConVars[7] = CreateConVar("sm_superheroes_heroes_slots", "3", "Amount of heroes a client can be at the same time.", FCVAR_NOTIFY, true, 1.0);
+	hConVars[8] = CreateConVar("sm_superheroes_heroes_group", "superhero", "Hero group for the configs to follow. ('All' = every hero)", FCVAR_NOTIFY);
 	
 	for (int i = 0; i < sizeof(hConVars); i++)
 	{
@@ -133,6 +135,7 @@ public void OnConfigsExecuted()
 	cv_bRespectLevel = GetConVarBool(hConVars[5]);
 	cv_bShowDescriptions = GetConVarBool(hConVars[6]);
 	cv_iClientHeroes = GetConVarInt(hConVars[7]);
+	GetConVarString(hConVars[8], cv_sGroup, sizeof(cv_sGroup));
 	
 	if (!cv_bStatus)
 	{
@@ -155,39 +158,48 @@ public void OnConfigsExecuted()
 //ConVar Changes
 public void OnConVarsChanged(Handle convar, const char[] oldValue, const char[] newValue)
 {
+	if (StrEqual(oldValue, newValue))
+	{
+		return;
+	}
+	
 	int value = StringToInt(newValue);
 	
 	if (convar == hConVars[0])
 	{
-		cv_bStatus = view_as<bool>value;
-	}
-	else if (convar == hConVars[0])
-	{
-		cv_iLoadType = value;
+		cv_bStatus = view_as<bool>(value);
 	}
 	else if (convar == hConVars[1])
 	{
-		cv_bLoadModels = view_as<bool>value;
+		cv_iLoadType = value;
 	}
 	else if (convar == hConVars[2])
 	{
-		strcopy(cv_sConfigLocation, sizeof(cv_sConfigLocation), newValue);
+		cv_bLoadModels = view_as<bool>(value);
 	}
 	else if (convar == hConVars[3])
 	{
-		cv_bRespectFlags = view_as<bool>value;
+		strcopy(cv_sConfigLocation, sizeof(cv_sConfigLocation), newValue);
 	}
 	else if (convar == hConVars[4])
 	{
-		cv_bRespectLevel = view_as<bool>value;
+		cv_bRespectFlags = view_as<bool>(value);
 	}
 	else if (convar == hConVars[5])
 	{
-		cv_bShowDescriptions = view_as<bool>value;
+		cv_bRespectLevel = view_as<bool>(value);
 	}
 	else if (convar == hConVars[6])
 	{
-		cv_iClientHeroes = view_as<bool>value;
+		cv_bShowDescriptions = view_as<bool>(value);
+	}
+	else if (convar == hConVars[7])
+	{
+		cv_iClientHeroes = view_as<bool>(value);
+	}
+	else if (convar == hConVars[8])
+	{
+		strcopy(cv_sGroup, sizeof(cv_sGroup), newValue);
 	}
 }
 
@@ -269,10 +281,8 @@ public int SuperHeroesListMenuHandle(Handle menu, MenuAction action, int client,
 			PrintToChat(client, "[Hero %i] - %s - %s", ID, sHeroName, sHeroDescription);
 			
 			char sAbilityName[32];
-			if (SH_ListAbilities(ID, 2, sAbilityName, sizeof(sAbilityName)))
-			{
-				PrintToChat(client, "[Hero %i] - Abilities: %s", ID, sAbilityName);
-			}
+			bool bHasAbilities = SH_ListAbilities(ID, 2, sAbilityName, sizeof(sAbilityName));
+			PrintToChat(client, "[Hero %i] - Abilities: %s", ID, bHasAbilities ? sAbilityName : "N/A");
 			
 			ListHeroesMenu(client);
 		}
@@ -346,7 +356,7 @@ public int SlotsMenuHandle(Handle menu, MenuAction action, int client, int slot)
 			SetMenuExitBackButton(hMenu, true);
 			
 			AddMenuItem(hMenu, "Clear", "Clear Slot");
-			RefillHeroesMenu(client, hMenu, cv_bRespectLevel, cv_bRespectFlags);
+			RefillHeroesMenu(client, hMenu, cv_bRespectLevel, cv_bRespectFlags, true);
 			
 			PushMenuCell(hMenu, "Slot_ID", Slot_ID);
 			
@@ -509,7 +519,7 @@ public Action SetClientHero(int client, int args)
 }
 
 //Function to create new heroes.
-int RegisterNewHero(SH_OnHeroRegistered callback = INVALID_FUNCTION, int Load_Type, Handle hPlugin, const char[] sName, const char[] sDescription, int iRequiredLevel, const char[] sModel, const char[] sFlags)
+int RegisterNewHero(SH_OnHeroRegistered callback = INVALID_FUNCTION, int Load_Type, Handle hPlugin, const char[] sName, const char[] sDescription, const char[] sGroup, int iRequiredLevel, const char[] sModel, const char[] sFlags)
 {
 	if (IsHeroRegistered(sName))
 	{
@@ -518,6 +528,7 @@ int RegisterNewHero(SH_OnHeroRegistered callback = INVALID_FUNCTION, int Load_Ty
 	
 	strcopy(iHeroes[iHeroesAmount][Hero_Name], MAX_HERO_NAME_LENGTH, sName);
 	strcopy(iHeroes[iHeroesAmount][Hero_Description], MAX_HERO_NAME_LENGTH, sDescription);
+	strcopy(iHeroes[iHeroesAmount][Hero_Group], MAX_HERO_GROUP_LENGTH, sGroup);
 	iHeroes[iHeroesAmount][Hero_RequiredLevel] = iRequiredLevel;
 	strcopy(iHeroes[iHeroesAmount][Hero_Model], PLATFORM_MAX_PATH, sModel);
 	strcopy(iHeroes[iHeroesAmount][Hero_Flags], 32, sFlags);
@@ -552,7 +563,7 @@ int RegisterNewHero(SH_OnHeroRegistered callback = INVALID_FUNCTION, int Load_Ty
 		}
 	}
 	
-	SH_LogInfo("Hero Registered - Index:[%i] Name:[%s] Description:[%s] Required Level:[%i] Model Path:[%s] Flags:[%s] LoadType:[%s]", HeroID, iHeroes[HeroID][Hero_Name], iHeroes[HeroID][Hero_Description], iHeroes[HeroID][Hero_RequiredLevel], iHeroes[HeroID][Hero_Model], iHeroes[HeroID][Hero_Flags], sLoadType);
+	SH_LogInfo("Hero Registered - Index:[%i] Name:[%s] Description:[%s] Group:[%s] Required Level:[%i] Model Path:[%s] Flags:[%s] LoadType:[%s]", HeroID, iHeroes[HeroID][Hero_Name], iHeroes[HeroID][Hero_Description], iHeroes[HeroID][Hero_Group], iHeroes[HeroID][Hero_RequiredLevel], iHeroes[HeroID][Hero_Model], iHeroes[HeroID][Hero_Flags], sLoadType);
 	
 	if (callback != INVALID_FUNCTION)
 	{
@@ -560,6 +571,7 @@ int RegisterNewHero(SH_OnHeroRegistered callback = INVALID_FUNCTION, int Load_Ty
 		Call_PushCell(HeroID);
 		Call_PushString(iHeroes[HeroID][Hero_Name]);
 		Call_PushString(iHeroes[HeroID][Hero_Description]);
+		Call_PushString(iHeroes[HeroID][Hero_Group]);
 		Call_PushCell(iHeroes[HeroID][Hero_RequiredLevel]);
 		Call_PushString(iHeroes[HeroID][Hero_Model]);
 		Call_PushString(iHeroes[HeroID][Hero_Flags]);
@@ -584,10 +596,15 @@ bool IsHeroRegistered(const char[] sName)
 }
 
 //Delete all items from the heroes menu and refill them.
-void RefillHeroesMenu(int client, Handle hMenu, bool bCheckLevels = false, bool bCheckVIP = false)
+void RefillHeroesMenu(int client, Handle hMenu, bool bCheckLevels = false, bool bCheckVIP = false, bool bIsSet = false)
 {
 	for (int i = 0; i < iHeroesAmount; i++)
 	{
+		if (StrContains(iHeroes[i][Hero_Group], "All") == -1 && !StrEqual(iHeroes[i][Hero_Group], cv_sGroup))
+		{
+			continue;
+		}
+		
 		bool bDisabled;
 		
 		char sValue[32];
@@ -624,6 +641,12 @@ void RefillHeroesMenu(int client, Handle hMenu, bool bCheckLevels = false, bool 
 		
 		AddMenuItem(hMenu, sValue, sDisplay, bDisabled ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
 	}
+	
+	int iCheck = bIsSet ? 2 : 1;
+	if (GetMenuItemCount(hMenu) < iCheck)
+	{
+		AddMenuItem(hMenu, "", "[No Heroes Found]", ITEMDRAW_DISABLED);
+	}
 }
 
 //Checks if a specific hero has flags.
@@ -656,7 +679,7 @@ bool ClientHasHeroFlags(int client, int HeroID)
 			{
 				count++;
 				
-				if (GetAdminFlag(admin, view_as<AdminFlag>i))
+				if (GetAdminFlag(admin, view_as<AdminFlag>(i)))
 				{
 					found++;
 				}
@@ -708,7 +731,7 @@ bool MakeClientHero(int client, int slot, const char[] sHeroName, bool bCheckLev
 {
 	int HeroID = GetHeroID(sHeroName);
 	
-	if (HeroID <= -1)
+	if (HeroID <= -1 || StrContains(iHeroes[HeroID][Hero_Group], "All") == -1 && !StrEqual(iHeroes[HeroID][Hero_Group], cv_sGroup))
 	{
 		return false;
 	}
@@ -719,7 +742,7 @@ bool MakeClientHero(int client, int slot, const char[] sHeroName, bool bCheckLev
 	{
 		PrintToChat(client, "You cannot pick this Hero, their required level is %i.", iRequiredLevel);
 		SetHeroesMenu(client);
-		return true;
+		return false;
 	}
 	
 	if (slot <= -1)
@@ -750,6 +773,14 @@ bool MakeClientHero(int client, int slot, const char[] sHeroName, bool bCheckLev
 	if (bVerbose)
 	{
 		PrintToChat(client, "Hero '%s' has been added to your roster.", iHeroes[HeroID][Hero_Name]);
+		
+		char sAbilityName[32];
+		bool bHasAbilities = SH_ListAbilities(HeroID, 2, sAbilityName, sizeof(sAbilityName));
+		
+		char sText[64];
+		Format(sText, sizeof(sText), "+%s", sAbilityName);
+		
+		PrintToChat(client, "Abilities Available: %s", bHasAbilities ? sText : "N/A");
 	}
 	
 	if (cv_bLoadModels && strlen(iHeroes[HeroID][Hero_Model]) != 0 && FileExists(iHeroes[HeroID][Hero_Model]))
@@ -871,12 +902,10 @@ bool LoadSuperHeroConfig(const char[] sFile)
 	}
 	
 	char sDescription[MAX_HERO_NAME_LENGTH];
-	if (!KvGetString(hKV, "Description", sDescription, sizeof(sDescription)))
-	{
-		LogError("Error parsing SuperHero config: [Missing Description Field] - %s", sPath);
-		CloseHandle(hKV);
-		return false;
-	}
+	KvGetString(hKV, "Description", sDescription, sizeof(sDescription), "No Description Available");
+	
+	char sGroup[MAX_HERO_GROUP_LENGTH];
+	KvGetString(hKV, "Group", sGroup, sizeof(sGroup), "superhero");
 	
 	int iRequiredLevel = KvGetNum(hKV, "RequiredLevel", 0);
 	if (iRequiredLevel < 0)
@@ -891,7 +920,7 @@ bool LoadSuperHeroConfig(const char[] sFile)
 	char sFlags[32];
 	KvGetString(hKV, "Flags", sFlags, sizeof(sFlags));
 	
-	int HeroID = RegisterNewHero(INVALID_FUNCTION, SH_LOAD_CONFIG, INVALID_HANDLE, sName, sDescription, iRequiredLevel, sModel, sFlags);
+	int HeroID = RegisterNewHero(INVALID_FUNCTION, SH_LOAD_CONFIG, INVALID_HANDLE, sName, sDescription, sGroup, iRequiredLevel, sModel, sFlags);
 	
 	if (KvJumpToKey(hKV, "Abilities"))
 	{
@@ -961,15 +990,18 @@ public int Native_RegisterHero(Handle hPlugin, int iParams)
 	char sDescription[MAX_HERO_DESCRIPTION_LENGTH];
 	GetNativeString(3, sDescription, sizeof(sDescription));
 	
-	int iRequiredLevel = GetNativeCell(4);
+	char sGroup[MAX_HERO_GROUP_LENGTH];
+	GetNativeString(4, sGroup, sizeof(sGroup));
+	
+	int iRequiredLevel = GetNativeCell(5);
 	
 	char sModel[PLATFORM_MAX_PATH];
-	GetNativeString(5, sModel, sizeof(sModel));
+	GetNativeString(6, sModel, sizeof(sModel));
 	
 	char sFlags[32];
-	GetNativeString(6, sFlags, sizeof(sFlags));
+	GetNativeString(7, sFlags, sizeof(sFlags));
 	
-	return RegisterNewHero(view_as<SH_OnHeroRegistered>GetNativeFunction(1), SH_LOAD_PLUGIN, hPlugin, sName, sDescription, iRequiredLevel, sModel, sFlags);
+	return RegisterNewHero(view_as<SH_OnHeroRegistered>(GetNativeFunction(1)), SH_LOAD_PLUGIN, hPlugin, sName, sDescription, sGroup, iRequiredLevel, sModel, sFlags);
 }
 
 //Retrieves the index of the hero the client is playing.
@@ -1009,7 +1041,7 @@ public int Native_AddClientHero(Handle hPlugin, int iParams)
 		return false;
 	}
 	
-	return MakeClientHero(client, slot, sHeroName, view_as<bool>GetNativeCell(4), view_as<bool>GetNativeCell(5));
+	return MakeClientHero(client, slot, sHeroName, view_as<bool>(GetNativeCell(4)), view_as<bool>(GetNativeCell(5)));
 }
 
 //Removes an index of a hero from the client.
@@ -1026,7 +1058,7 @@ public int Native_RemoveClientHero(Handle hPlugin, int iParams)
 		return false;
 	}
 	
-	return RemoveClientHero(client, slot, sHeroName, view_as<bool>GetNativeCell(4));
+	return RemoveClientHero(client, slot, sHeroName, view_as<bool>(GetNativeCell(4)));
 }
 
 //Checks if a client is a specified hero. This searches through all the heroes.

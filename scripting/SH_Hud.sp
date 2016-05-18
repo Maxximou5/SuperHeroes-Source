@@ -85,11 +85,16 @@ public void OnConfigsExecuted()
 //ConVar Changes
 public void OnConVarsChanged(Handle convar, const char[] oldValue, const char[] newValue)
 {
+	if (StrEqual(oldValue, newValue))
+	{
+		return;
+	}
+	
 	int value = StringToInt(newValue);
 	
 	if (convar == hConVars[0])
 	{
-		cv_bStatus = view_as<bool>value;
+		cv_bStatus = view_as<bool>(value);
 	}
 	else if (convar == hConVars[1])
 	{

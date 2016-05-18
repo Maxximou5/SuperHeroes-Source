@@ -19,10 +19,15 @@
  **/
 native void SH_CreateConfig(const char[] sName);
 
+native int SH_AddInteger();
+native int SH_AddString();
+
 #if !defined REQUIRE_PLUGIN
 public __pl_SH_Configurations_SetNTVOptional()
 {
 	MarkNativeAsOptional("SH_CreateConfig");
+	MarkNativeAsOptional("SH_AddInteger");
+	MarkNativeAsOptional("SH_AddString");
 }
 #endif
 

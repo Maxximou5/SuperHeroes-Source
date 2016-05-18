@@ -80,7 +80,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iErr
 //On Plugin Start
 public void OnPluginStart()
 {
-	hConVars[0] = CreateConVar("superheroes_version", PLUGIN_VERSION, "Version Control", FCVAR_REPLICATED | FCVAR_NOTIFY | FCVAR_PLUGIN | FCVAR_SPONLY | FCVAR_DONTRECORD);
+	hConVars[0] = CreateConVar("superheroes_version", PLUGIN_VERSION, "Version Control", FCVAR_REPLICATED | FCVAR_NOTIFY | FCVAR_SPONLY | FCVAR_DONTRECORD);
 	hConVars[1] = CreateConVar("sm_superheroes_core_status", "1", "Status of the plugin.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	hConVars[2] = CreateConVar("sm_superheroes_core_database", "superheroes", "Name of the database config entry.", FCVAR_NOTIFY);
 	
@@ -115,14 +115,25 @@ public void OnConfigsExecuted()
 	if (bIsLateLoad)
 	{
 		//Do Things Later...
+		
+		bIsLateLoad = false;
 	}
 	
-	SQL_TConnect(OnSQLConnect, cv_sDatabase);
+	if (hDatabase == null)
+	{
+		bIsConnected = false;
+		SQL_TConnect(OnSQLConnect, cv_sDatabase);
+	}
 }
 
 //ConVar Changes
 public void OnConVarsChanged(Handle convar, const char[] oldValue, const char[] newValue)
 {
+	if (StrEqual(oldValue, newValue))
+	{
+		return;
+	}
+	
 	int value = StringToInt(newValue);
 	
 	if (convar == hConVars[0])
@@ -131,7 +142,7 @@ public void OnConVarsChanged(Handle convar, const char[] oldValue, const char[] 
 	}
 	else if (convar == hConVars[1])
 	{
-		cv_bStatus = view_as<bool>value;
+		cv_bStatus = view_as<bool>(value);
 	}
 	else if (convar == hConVars[2])
 	{
@@ -148,10 +159,17 @@ public void OnAllPluginsLoaded()
 //On SQL Connection
 public void OnSQLConnect(Handle owner, Handle hndl, const char[] sError, any data)
 {
-	if (hndl == INVALID_HANDLE)
+	if (hndl == null)
 	{
 		LogError("Error connecting to database: %s", sError);
 		bIsConnected = false;
+		return;
+	}
+	
+	//Already have a connection even though we just pulled a new one for some reason.
+	if (hDatabase != null)
+	{
+		bIsConnected = true;
 		return;
 	}
 	
@@ -178,7 +196,10 @@ public void OnReadyStatus(any data)
 //Opens the Main Menu to the client with registered items provided by other modules.
 public Action OpenMainMenu(int client, int args)
 {
-	if (!cv_bStatus)return Plugin_Handled;
+	if (!cv_bStatus)
+	{
+		return Plugin_Handled;
+	}
 	
 	if (!ShowMainMenu(client))
 	{
@@ -205,13 +226,13 @@ bool ShowMainMenu(int client)
 //Executes threaded queries into SuperHeroes database and receive callbacks.
 public int Native_TQuery(Handle hPlugin, int iParams)
 {
-	if (!bIsConnected || hDatabase == INVALID_HANDLE)
+	if (!bIsConnected || hDatabase == null)
 	{
 		ThrowNativeError(SP_ERROR_NATIVE, "Database is not connected currently.");
 		return;
 	}
 	
-	SQLTCallback callback = view_as<SQLTCallback>GetNativeFunction(1); //Callback
+	SQLTCallback callback = view_as<SQLTCallback>(GetNativeFunction(1)); //Callback
 	
 	//Query String Size
 	int size;
@@ -222,7 +243,7 @@ public int Native_TQuery(Handle hPlugin, int iParams)
 	GetNativeString(2, sQuery, size);
 	
 	int data = GetNativeCell(3); //Data
-	DBPriority prio = view_as<DBPriority>GetNativeCell(4); //Priority
+	DBPriority prio = view_as<DBPriority>(GetNativeCell(4)); //Priority
 	
 	Handle hPack = CreateDataPack();
 	WritePackCell(hPack, hPlugin); //Plugin Handle
@@ -236,8 +257,8 @@ public void Query_Callback(Handle owner, Handle hndl, const char[] error, any da
 {
 	ResetPack(data);
 	
-	Handle plugin = view_as<Handle>ReadPackCell(data); //Plugin Handle
-	SQLTCallback callback = view_as<SQLTCallback>ReadPackFunction(data); //Callback Handle
+	Handle plugin = view_as<Handle>(ReadPackCell(data)); //Plugin Handle
+	SQLTCallback callback = view_as<SQLTCallback>(ReadPackFunction(data)); //Callback Handle
 	int pack = ReadPackCell(data); //Data
 	
 	CloseHandle(data);
@@ -253,7 +274,7 @@ public void Query_Callback(Handle owner, Handle hndl, const char[] error, any da
 //Executes fast queries to the database with no callbacks.
 public int Native_Query(Handle hPlugin, int iParams)
 {
-	if (!bIsConnected || hDatabase == INVALID_HANDLE)
+	if (!bIsConnected || hDatabase == null)
 	{
 		ThrowNativeError(SP_ERROR_NATIVE, "Database is not connected currently.");
 		return;
@@ -279,10 +300,10 @@ public int Native_AddMainMenuItem(Handle hPlugin, int iParams)
 	char sValue[64];
 	GetNativeString(2, sValue, sizeof(sValue));
 	
-	AddMainMenuItem(sDisplay, sValue, hPlugin, view_as<SH_MenuItemClickCallback>GetNativeFunction(3), GetNativeCell(4));
+	AddMainMenuItem(sDisplay, sValue, hPlugin, view_as<SH_MenuItemClickCallback>(GetNativeFunction(3)), GetNativeCell(4));
 }
 
-void AddMainMenuItem(const char[] sDisplay, const char[] value = "", Handle plugin = INVALID_HANDLE, SH_MenuItemClickCallback callback, int order = 32)
+void AddMainMenuItem(const char[] sDisplay, const char[] value = "", Handle plugin = null, SH_MenuItemClickCallback callback, int order = 32)
 {
 	int item;
 	
@@ -328,7 +349,7 @@ void SortMainMenuItems()
 		}
 	}
 	
-	if (hMainMenu != INVALID_HANDLE)
+	if (hMainMenu != null)
 	{
 		RemoveAllMenuItems(hMainMenu);
 		
@@ -368,7 +389,7 @@ public int Native_IsValidPlayer(Handle hPlugin, int iParams)
 {
 	int client = GetNativeCell(1);
 	
-	if (client <= 0 || client > MaxClients || !IsClientInGame(client) || view_as<bool>GetNativeCell(2) && IsFakeClient(client) || view_as<bool>GetNativeCell(3) && !IsPlayerAlive(client))
+	if (client <= 0 || client > MaxClients || !IsClientInGame(client) || view_as<bool>(GetNativeCell(2)) && IsFakeClient(client) || view_as<bool>(GetNativeCell(3)) && !IsPlayerAlive(client))
 	{
 		return false;
 	}

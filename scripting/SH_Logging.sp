@@ -29,9 +29,9 @@
 Handle hConVars[CONVAR_NUMBER];
 bool cv_bStatus;
 char cv_sPathing[PLATFORM_MAX_PATH]; char cv_sFileNames[256]; char cv_sDateFormat[32];
-bool cv_bShow_Default; bool cv_bShow_Trace; bool cv_bShow_Debug; bool cv_bShow_Info; bool cv_bShow_Warning; bool cv_bShow_Error;
-bool cv_bSubdirectories;
-bool cv_bSub_Default; bool cv_bSub_Trace; bool cv_bSub_Debug; bool cv_bSub_Info; bool cv_bSub_Warning; bool cv_bSub_Error; 
+bool cv_bShow_Default = true; bool cv_bShow_Trace = true; bool cv_bShow_Debug = true; bool cv_bShow_Info = true; bool cv_bShow_Warning = true; bool cv_bShow_Error = true;
+bool cv_bSubdirectories = true;
+bool cv_bSub_Default = true; bool cv_bSub_Trace = true; bool cv_bSub_Debug = true; bool cv_bSub_Info = true; bool cv_bSub_Warning = true; bool cv_bSub_Error = true; 
 
 //Enums
 enum ELOG_LEVEL
@@ -89,8 +89,8 @@ public void OnPluginStart()
 	hConVars[3] = CreateConVar("sm_superheroes_logging_date_format", "%Y-%m-%d", "Format to use when giving dates.", FCVAR_NOTIFY);
 	
 	hConVars[4] = CreateConVar("sm_superheroes_logging_show_default", "1", "Status to show default logs.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
-	hConVars[5] = CreateConVar("sm_superheroes_logging_show_trace", "0", "Status to show trace logs.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
-	hConVars[6] = CreateConVar("sm_superheroes_logging_show_debug", "0", "Status to show debug logs.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	hConVars[5] = CreateConVar("sm_superheroes_logging_show_trace", "1", "Status to show trace logs.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	hConVars[6] = CreateConVar("sm_superheroes_logging_show_debug", "1", "Status to show debug logs.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	hConVars[7] = CreateConVar("sm_superheroes_logging_show_info", "1", "Status to show info logs.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	hConVars[8] = CreateConVar("sm_superheroes_logging_show_warning", "1", "Status to show warning logs.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	hConVars[9] = CreateConVar("sm_superheroes_logging_show_error", "1", "Status to show error logs.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
@@ -142,11 +142,16 @@ public void OnConfigsExecuted()
 //ConVar Changes
 public void OnConVarsChanged(Handle convar, const char[] oldValue, const char[] newValue)
 {
+	if (StrEqual(oldValue, newValue))
+	{
+		return;
+	}
+	
 	int value = StringToInt(newValue);
 	
 	if (convar == hConVars[0])
 	{
-		cv_bStatus = view_as<bool>value;
+		cv_bStatus = view_as<bool>(value);
 	}
 	else if (convar == hConVars[1])
 	{
@@ -162,55 +167,55 @@ public void OnConVarsChanged(Handle convar, const char[] oldValue, const char[] 
 	}
 	else if (convar == hConVars[4])
 	{
-		cv_bShow_Default = view_as<bool>value;
+		cv_bShow_Default = view_as<bool>(value);
 	}
 	else if (convar == hConVars[5])
 	{
-		cv_bShow_Trace = view_as<bool>value;
+		cv_bShow_Trace = view_as<bool>(value);
 	}
 	else if (convar == hConVars[6])
 	{
-		cv_bShow_Debug = view_as<bool>value;
+		cv_bShow_Debug = view_as<bool>(value);
 	}
 	else if (convar == hConVars[7])
 	{
-		cv_bShow_Info = view_as<bool>value;
+		cv_bShow_Info = view_as<bool>(value);
 	}
 	else if (convar == hConVars[8])
 	{
-		cv_bShow_Warning = view_as<bool>value;
+		cv_bShow_Warning = view_as<bool>(value);
 	}
 	else if (convar == hConVars[9])
 	{
-		cv_bShow_Error = view_as<bool>value;
+		cv_bShow_Error = view_as<bool>(value);
 	}
 	else if (convar == hConVars[10])
 	{
-		cv_bSubdirectories = view_as<bool>value;
+		cv_bSubdirectories = view_as<bool>(value);
 	}
 	else if (convar == hConVars[11])
 	{
-		cv_bSub_Default = view_as<bool>value;
+		cv_bSub_Default = view_as<bool>(value);
 	}
 	else if (convar == hConVars[12])
 	{
-		cv_bSub_Trace = view_as<bool>value;
+		cv_bSub_Trace = view_as<bool>(value);
 	}
 	else if (convar == hConVars[13])
 	{
-		cv_bSub_Debug = view_as<bool>value;
+		cv_bSub_Debug = view_as<bool>(value);
 	}
 	else if (convar == hConVars[14])
 	{
-		cv_bSub_Info = view_as<bool>value;
+		cv_bSub_Info = view_as<bool>(value);
 	}
 	else if (convar == hConVars[15])
 	{
-		cv_bSub_Warning = view_as<bool>value;
+		cv_bSub_Warning = view_as<bool>(value);
 	}
 	else if (convar == hConVars[16])
 	{
-		cv_bSub_Error = view_as<bool>value;
+		cv_bSub_Error = view_as<bool>(value);
 	}
 }
 

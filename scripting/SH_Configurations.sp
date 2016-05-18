@@ -41,6 +41,8 @@ public Plugin myinfo =
 public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iErrorSize)
 {
 	CreateNative("SH_CreateConfig", Native_CreateConfig);
+	CreateNative("SH_AddInteger", Native_AddInteger);
+	CreateNative("SH_AddString", Native_AddString);
 	
 	RegPluginLibrary("SH_Configurations");
 	
@@ -71,6 +73,9 @@ public void OnConfigsExecuted()
 	cv_bLoadType = GetConVarBool(hConVars[1]);
 	GetConVarString(hConVars[2], cv_sConfigLocation, sizeof(cv_sConfigLocation));
 	GetConVarString(hConVars[3], cv_sConfigurationName, sizeof(cv_sConfigurationName));
+	
+	cv_bStatus = false;
+	SH_Log("Plugin isn't finished yet, disabling it.");
 	
 	if (!cv_bStatus)
 	{
@@ -106,15 +111,20 @@ public void OnConfigsExecuted()
 //ConVar Changes
 public void OnConVarsChanged(Handle convar, const char[] oldValue, const char[] newValue)
 {
+	if (StrEqual(oldValue, newValue))
+	{
+		return;
+	}
+	
 	int value = StringToInt(newValue);
 	
 	if (convar == hConVars[0])
 	{
-		cv_bStatus = view_as<bool>value;
+		cv_bStatus = view_as<bool>(value);
 	}
 	else if (convar == hConVars[1])
 	{
-		cv_bLoadType = view_as<bool>value;
+		cv_bLoadType = view_as<bool>(value);
 	}
 	else if (convar == hConVars[2])
 	{
@@ -132,9 +142,43 @@ public void OnPluginEnd()
 	CloseHandle(hKV);
 }
 
-void AddHeroConfig(Handle config, const char[] sName)
+bool AddHeroConfig(Handle config, const char[] sName)
 {
-	KvJumpToKey(config, sName, true);
+	return KvJumpToKey(config, sName, true);
+}
+
+bool AddIntegerToConfig(Handle config, const char[] sName, const char[] sVariableName, int iDefault)
+{
+	if (!KvJumpToKey(config, sName))
+	{
+		return false;
+	}
+	
+	if (iDefault || strlen(sVariableName) != 0)
+	{
+		
+	}
+	
+	KvRewind(config);
+	
+	return true;
+}
+
+bool AddStringToConfig(Handle config, const char[] sName, const char[] sVariableName, const char[] sDefault, char[] sReturn, int size)
+{
+	if (!KvJumpToKey(config, sName))
+	{
+		return false;
+	}
+	
+	if (strlen(sDefault) != 0 || strlen(sVariableName) != 0 || size)
+	{
+		strcopy(sReturn, size, sReturn);
+	}
+	
+	KvRewind(config);
+	
+	return true;
 }
 
 //////////////////
@@ -147,4 +191,36 @@ public int Native_CreateConfig(Handle hPlugin, int iParams)
 	GetNativeString(0, sName, sizeof(sName));
 	
 	AddHeroConfig(hKV, sName);
+}
+
+public int Native_AddInteger(Handle hPlugin, int iParams)
+{
+	char sName[64];
+	GetNativeString(0, sName, sizeof(sName));
+	
+	char sVariableName[64];
+	GetNativeString(1, sVariableName, sizeof(sVariableName));
+	
+	int iDefault = GetNativeCell(2);
+	
+	return AddIntegerToConfig(hKV, sName, sVariableName, iDefault);
+}
+
+public int Native_AddString(Handle hPlugin, int iParams)
+{
+	char sName[64];
+	GetNativeString(0, sName, sizeof(sName));
+	
+	char sVariableName[64];
+	GetNativeString(1, sVariableName, sizeof(sVariableName));
+	
+	char sDefault[64];
+	GetNativeString(2, sDefault, sizeof(sDefault));
+	
+	int size = GetNativeCell(4);
+	
+	char[] sReturn = new char[size];
+	AddStringToConfig(hKV, sName, sVariableName, sDefault, sReturn, size);
+	
+	SetNativeString(3, sReturn, size);
 }
